@@ -1,4 +1,4 @@
-package eu.droogers.smsmatrix;
+package com.averydorgan.smsmatrix;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,6 +11,8 @@ import androidx.core.content.ContextCompat;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import smsmatrix.Smsmatrix;
 
 /**
  * Created by gerben on 6-10-17.
@@ -66,7 +68,7 @@ public class ReceiverListener extends BroadcastReceiver {
             }
         }
         for (String originatinAddress : msg.keySet()) {
-            Utilities.sendMatrix(context, msg.get(originatinAddress), originatinAddress, Matrix.MESSAGE_TYPE_TEXT);
+            Smsmatrix.sendMatrix(msg.get(originatinAddress), originatinAddress, Matrix.MESSAGE_TYPE_TEXT, null, null);
         }
     }
 
@@ -85,6 +87,6 @@ public class ReceiverListener extends BroadcastReceiver {
                 body += " is calling";
                 break;
         }
-        Utilities.sendMatrix(context, body, cal_from, Matrix.MESSAGE_TYPE_NOTICE);
+        Smsmatrix.sendMatrix(body, cal_from, Matrix.MESSAGE_TYPE_NOTICE, null, null);
     }
 }

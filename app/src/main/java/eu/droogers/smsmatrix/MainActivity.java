@@ -1,4 +1,4 @@
-package eu.droogers.smsmatrix;
+package com.averydorgan.smsmatrix;
 
 import android.app.Activity;
 import android.content.Context;

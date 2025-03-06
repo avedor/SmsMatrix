@@ -1,4 +1,4 @@
-package eu.droogers.smsmatrix;
+package com.averydorgan.smsmatrix;
 
 /**
  * Created by gerben on 9-10-17.

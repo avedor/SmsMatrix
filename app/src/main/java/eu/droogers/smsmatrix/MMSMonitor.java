@@ -1,4 +1,4 @@
-package eu.droogers.smsmatrix;
+package com.averydorgan.smsmatrix;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -13,6 +13,8 @@ import android.util.Log;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import smsmatrix.Smsmatrix;
 
 public class MMSMonitor {
     private MatrixService mainActivity;
@@ -215,12 +217,12 @@ public class MMSMonitor {
                             Log.d(TAG, "address = " + address);
 
                             if (!message.isEmpty()) {
-                                Utilities.sendMatrix(mainActivity, message, address, messageType);
+                                Smsmatrix.sendMatrix(message, address, messageType, null, null);
                             }
                             if (mediaData != null) {
-                                Utilities.sendMatrix(
-                                    mainActivity,
-                                    mediaData,
+                                String mediaDataString = new String(mediaData);
+                                Smsmatrix.sendMatrix(
+                                    mediaDataString,
                                     address,
                                     messageType,
                                     fileName,
