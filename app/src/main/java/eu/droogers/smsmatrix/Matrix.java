@@ -1,19 +1,13 @@
 package eu.droogers.smsmatrix;
 
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.telephony.SmsManager;
 import android.util.Log;
-import android.widget.Toast;
 
-
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-import org.json.JSONException;
 
 import org.matrix.androidsdk.HomeServerConnectionConfig;
 import org.matrix.androidsdk.MXDataHandler;
@@ -53,16 +47,13 @@ public class Matrix {
     Context context;
     MXSession session;
     int transaction;
-    private String tag = "Matrix";
-    private List<NotSendMesage> notSendMesages = new ArrayList<>();
+    private final List<NotSendMessage> notSendMessages = new ArrayList<>();
     MXDataHandler dh;
     private IMXEventListener evLis;
     IMXStore store;
     String deviceName;
-    private String botUsername;
-    private String botHSUrl;
 
-    private String realUserid;
+    private final String realUserid;
 
     // Message type constants.
     public static final String MESSAGE_TYPE_TEXT = "m.text";
@@ -79,8 +70,6 @@ public class Matrix {
 
         realUserid = username;
         deviceName = device;
-        this.botUsername = botUsername;
-        botHSUrl = url;
         this.syncDelay = Integer.parseInt(syncDelay);
         this.syncTimeout = Integer.parseInt(syncTimeout);
 
@@ -192,17 +181,18 @@ public class Matrix {
 
                             changeDisplayname(info, getContactName(phoneNumber, context));
                             Room room = store.getRoom(info);
-                            SendMesageToRoom(room, body, type);
+                            SendMessageToRoom(room, body, type);
                         }
                     });
                 }
             } else {
                 changeDisplayname(room.getRoomId(), getContactName(phoneNumber, context));
-                SendMesageToRoom(room, body, type);
+                SendMessageToRoom(room, body, type);
             }
         } else {
+            String tag = "Matrix";
             Log.e(tag, "Error with sending message");
-            notSendMesages.add(new NotSendMesage(phoneNumber, body, type));
+            notSendMessages.add(new NotSendMessage(phoneNumber, body, type));
         }
     }
 
@@ -232,6 +222,7 @@ public class Matrix {
                     JsonObject info = new JsonObject();
                     info.addProperty("mimetype", contentType);
                     json.add("info", info);
+                    assert room != null;
                     session.getRoomsApiClient().sendEventToRoom(
                         String.valueOf(transaction),
                         room.getRoomId(),
@@ -262,7 +253,7 @@ public class Matrix {
         });
     }
 
-    public void SendMesageToRoom(Room room, String body, String type) {
+    public void SendMessageToRoom(Room room, String body, String type) {
         Message msg = new Message();
         msg.body = body;
         msg.msgtype = type;
@@ -346,12 +337,12 @@ public class Matrix {
 
 
     public void onEventStreamLoaded() {
-        sendMessageList(notSendMesages);
-        notSendMesages.clear();
+        sendMessageList(notSendMessages);
+        notSendMessages.clear();
     }
 
-    public void sendMessageList(List<NotSendMesage> messages) {
-        for (NotSendMesage ms : messages) {
+    public void sendMessageList(List<NotSendMessage> messages) {
+        for (NotSendMessage ms : messages) {
             sendMessage(ms.getPhone(), ms.getBody(), ms.getType());
         }
     }

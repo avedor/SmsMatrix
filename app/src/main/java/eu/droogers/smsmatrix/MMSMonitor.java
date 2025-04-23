@@ -10,16 +10,17 @@ import android.os.Message;
 import android.provider.Telephony;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 public class MMSMonitor {
-    private MatrixService mainActivity;
-    private ContentResolver contentResolver = null;
-    private Context mainContext;
-    private Handler mmshandler = null;
-    private ContentObserver mmsObserver = null;
+    private final MatrixService mainActivity;
+    private final ContentResolver contentResolver;
+    private final ContentObserver mmsObserver;
     public boolean monitorStatus = false;
     private int mmsCount = 0;
     private static final String TAG = "MMSMonitor";
@@ -27,8 +28,7 @@ public class MMSMonitor {
     public MMSMonitor(final MatrixService mainActivity, final Context mainContext) {
         this.mainActivity = mainActivity;
         contentResolver = mainActivity.getContentResolver();
-        this.mainContext = mainContext;
-        mmshandler = new MMSHandler();
+        Handler mmshandler = new MMSHandler();
         mmsObserver = new MMSObserver(mmshandler);
         Log.i(TAG, "***** Start MMS Monitor *****");
     }
@@ -37,29 +37,27 @@ public class MMSMonitor {
     public void startMMSMonitoring() {
         try {
             monitorStatus = false;
-            if (!monitorStatus) {
-                contentResolver.registerContentObserver(
-                    Uri.parse("content://mms"),
-                    true,
-                    mmsObserver
-                );
+            contentResolver.registerContentObserver(
+                Uri.parse("content://mms"),
+                true,
+                mmsObserver
+            );
 
-                // Save the count of MMS messages on start-up.
-                Uri uriMMSURI = Uri.parse("content://mms-sms");
-                Cursor mmsCur = mainActivity.getContentResolver().query(
-                    uriMMSURI,
-                    null,
-                    Telephony.Mms.MESSAGE_BOX + " = " + Telephony.Mms.MESSAGE_BOX_INBOX,
-                    null,
-                    Telephony.Mms._ID
-                );
-                if (mmsCur != null && mmsCur.getCount() > 0) {
-                    mmsCount = mmsCur.getCount();
-                    Log.d(TAG, "Init MMSCount = " + mmsCount);
-                }
+            // Save the count of MMS messages on start-up.
+            Uri uriMMSURI = Uri.parse("content://mms-sms");
+            Cursor mmsCur = mainActivity.getContentResolver().query(
+                uriMMSURI,
+                null,
+                Telephony.Mms.MESSAGE_BOX + " = " + Telephony.Mms.MESSAGE_BOX_INBOX,
+                null,
+                Telephony.Mms._ID
+            );
+            if (mmsCur != null && mmsCur.getCount() > 0) {
+                mmsCount = mmsCur.getCount();
+                Log.d(TAG, "Init MMSCount = " + mmsCount);
             }
         } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(TAG, Objects.requireNonNull(e.getMessage()));
         }
     }
 
@@ -67,24 +65,22 @@ public class MMSMonitor {
     public void stopMMSMonitoring() {
         try {
             monitorStatus = false;
-            if (!monitorStatus){
-                contentResolver.unregisterContentObserver(mmsObserver);
-            }
+            contentResolver.unregisterContentObserver(mmsObserver);
         } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(TAG, Objects.requireNonNull(e.getMessage()));
         }
     }
 
 
-    class MMSHandler extends Handler {
-        public void handleMessage(final Message msg) {
+    static class MMSHandler extends Handler {
+        public void handleMessage(@NonNull final Message msg) {
             //Log.i(TAG, "Handler");
         }
     }
 
 
     class MMSObserver extends ContentObserver {
-        private Handler mms_handle = null;
+        private final Handler mms_handle;
         public MMSObserver(final Handler mmshandle) {
             super(mmshandle);
             mms_handle = mmshandle;
@@ -119,6 +115,7 @@ public class MMSMonitor {
                 // Proceed if there is a new message.
                 if (currMMSCount > mmsCount) {
                     mmsCount = currMMSCount;
+                    assert mmsCur != null;
                     mmsCur.moveToLast();
 
                     // Get the message id and subject.
@@ -130,7 +127,7 @@ public class MMSMonitor {
                     byte[] mediaData = null;
                     String message = "";
                     String address = "";
-                    String fileName = "";
+                    String fileName;
                     String fileType = "";
                     String messageType = "";
 
@@ -143,6 +140,7 @@ public class MMSMonitor {
                         null,
                         Telephony.Mms.Part._ID
                     );
+                    assert curPart != null;
                     Log.d(TAG, "Parts records length = " + curPart.getCount());
                     curPart.moveToLast();
                     do {
@@ -171,7 +169,7 @@ public class MMSMonitor {
                                     null,
                                     Telephony.Mms.Part._ID
                                 );
-                                for (int i = 0; i < curPart1.getColumnCount(); i++)
+                                for (int i = 0; i < Objects.requireNonNull(curPart1).getColumnCount(); i++)
                                 {
                                     Log.d(TAG,"Column Name : " + curPart1.getColumnName(i));
                                 }
@@ -232,7 +230,7 @@ public class MMSMonitor {
                 }
 
             } catch (Exception e) {
-                Log.e(TAG, e.getMessage());
+                Log.e(TAG, Objects.requireNonNull(e.getMessage()));
             }
         }
     }
@@ -251,6 +249,7 @@ public class MMSMonitor {
             is = mContentResolver.openInputStream(partURI);
 
             byte[] buffer = new byte[256];
+            assert is != null;
             int len = is.read(buffer);
             while (len >= 0) {
                 baos.write(buffer, 0, len);
@@ -275,28 +274,20 @@ public class MMSMonitor {
 
 
     private boolean isImageType(String mime) {
-        boolean result = false;
-        if (mime.equalsIgnoreCase("image/jpg")
-            || mime.equalsIgnoreCase("image/jpeg")
-            || mime.equalsIgnoreCase("image/png")
-            || mime.equalsIgnoreCase("image/gif")
-            || mime.equalsIgnoreCase("image/bmp")) {
-            result = true;
-        }
-        return result;
+        return mime.equalsIgnoreCase("image/jpg")
+                || mime.equalsIgnoreCase("image/jpeg")
+                || mime.equalsIgnoreCase("image/png")
+                || mime.equalsIgnoreCase("image/gif")
+                || mime.equalsIgnoreCase("image/bmp");
     }
 
 
     private boolean isVideoType(String mime) {
-        boolean result = false;
-        if (mime.equalsIgnoreCase("video/3gpp")
-            || mime.equalsIgnoreCase("video/3gpp2")
-            || mime.equalsIgnoreCase("video/avi")
-            || mime.equalsIgnoreCase("video/mp4")
-            || mime.equalsIgnoreCase("video/mpeg")
-            || mime.equalsIgnoreCase("video/webm")) {
-            result = true;
-        }
-        return result;
+        return mime.equalsIgnoreCase("video/3gpp")
+                || mime.equalsIgnoreCase("video/3gpp2")
+                || mime.equalsIgnoreCase("video/avi")
+                || mime.equalsIgnoreCase("video/mp4")
+                || mime.equalsIgnoreCase("video/mpeg")
+                || mime.equalsIgnoreCase("video/webm");
     }
 }

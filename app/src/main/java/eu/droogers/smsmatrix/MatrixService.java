@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -23,14 +22,6 @@ import androidx.core.app.NotificationCompat;
 
 public class MatrixService extends Service {
     private Matrix mx;
-    private final String TAG = "MatrixService";
-    private String botUsername;
-    private String botPassword;
-    private String username;
-    private String device;
-    private String hsUrl;
-    private String syncDelay;
-    private String syncTimeout;
     private MMSMonitor mms;
     private String mChannelId = "";
 
@@ -57,17 +48,18 @@ public class MatrixService extends Service {
         }
 
         SharedPreferences sp = getSharedPreferences("settings", Context.MODE_PRIVATE);
-        botUsername = sp.getString("botUsername", "");
-        botPassword = sp.getString("botPassword", "");
-        username = sp.getString("username", "");
-        device = sp.getString("device", "");
-        hsUrl = sp.getString("hsUrl", "");
-        syncDelay = sp.getString("syncDelay", "12");
-        syncTimeout = sp.getString("syncTimeout", "60");
+        String botUsername = sp.getString("botUsername", "");
+        String botPassword = sp.getString("botPassword", "");
+        String username = sp.getString("username", "");
+        String device = sp.getString("device", "");
+        String hsUrl = sp.getString("hsUrl", "");
+        String syncDelay = sp.getString("syncDelay", "12");
+        String syncTimeout = sp.getString("syncTimeout", "60");
 
+        String TAG = "MatrixService";
         if (mx == null && !botUsername.isEmpty() && !botPassword.isEmpty() && !username.isEmpty() && !device.isEmpty() && !hsUrl.isEmpty() && !syncDelay.isEmpty() && !syncTimeout.isEmpty()) {
             mx = new Matrix(getApplication(), hsUrl, botUsername, botPassword, username, device, syncDelay, syncTimeout);
-            Log.e(TAG, "onStartCommand: " + hsUrl );
+            Log.e(TAG, "onStartCommand: " + hsUrl);
             Toast.makeText(this, "service starting:", Toast.LENGTH_SHORT).show();
         } else if (mx == null) {
             Toast.makeText(this, "Missing Information", Toast.LENGTH_SHORT).show();
@@ -79,6 +71,7 @@ public class MatrixService extends Service {
         String type = intent.getStringExtra("SendSms_type");
         if (phone != null) {
             System.out.println(phone);
+            assert type != null;
             if (type.equals(Matrix.MESSAGE_TYPE_TEXT) || type.equals(Matrix.MESSAGE_TYPE_NOTICE))
             {
                 String body = intent.getStringExtra("SendSms_body");

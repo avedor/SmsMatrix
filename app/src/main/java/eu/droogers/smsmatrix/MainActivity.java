@@ -43,13 +43,13 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         sp = getSharedPreferences("settings", Context.MODE_PRIVATE);
-        botUsername = (EditText) findViewById(R.id.editText_botUsername);
-        botPassword = (EditText) findViewById(R.id.editText_botpassword);
-        username = (EditText) findViewById(R.id.editText_username);
-        device = (EditText) findViewById(R.id.editText_device);
-        hsUrl = (EditText) findViewById(R.id.editText_hsUrl);
-        syncDelay = (EditText) findViewById(R.id.editText_syncDelay);
-        syncTimeout = (EditText) findViewById(R.id.editText_syncTimeout);
+        botUsername = findViewById(R.id.editText_botUsername);
+        botPassword = findViewById(R.id.editText_botpassword);
+        username = findViewById(R.id.editText_username);
+        device = findViewById(R.id.editText_device);
+        hsUrl = findViewById(R.id.editText_hsUrl);
+        syncDelay = findViewById(R.id.editText_syncDelay);
+        syncTimeout = findViewById(R.id.editText_syncTimeout);
 
         botUsername.setText(sp.getString("botUsername", ""));
         botPassword.setText(sp.getString("botPassword", ""));
@@ -60,28 +60,25 @@ public class MainActivity extends Activity {
         syncTimeout.setText(sp.getString("syncTimeout", "30"));
 
 
-        Button saveButton = (Button) findViewById(R.id.button_save);
-        saveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!checkPermissions()) {
-                    askPermissions();
-                } else {
-                    SharedPreferences.Editor editor = sp.edit();
-                    editor.putString("botUsername", botUsername.getText().toString());
-                    editor.putString("botPassword", botPassword.getText().toString());
-                    editor.putString("username", username.getText().toString());
-                    editor.putString("device", device.getText().toString());
-                    editor.putString("hsUrl", hsUrl.getText().toString());
-                    editor.putString("syncDelay", syncDelay.getText().toString());
-                    editor.putString("syncTimeout", syncTimeout.getText().toString());
-                    editor.apply();
+        Button saveButton = findViewById(R.id.button_save);
+        saveButton.setOnClickListener(v -> {
+            if (!checkPermissions()) {
+                askPermissions();
+            } else {
+                SharedPreferences.Editor editor = sp.edit();
+                editor.putString("botUsername", botUsername.getText().toString());
+                editor.putString("botPassword", botPassword.getText().toString());
+                editor.putString("username", username.getText().toString());
+                editor.putString("device", device.getText().toString());
+                editor.putString("hsUrl", hsUrl.getText().toString());
+                editor.putString("syncDelay", syncDelay.getText().toString());
+                editor.putString("syncTimeout", syncTimeout.getText().toString());
+                editor.apply();
 
-                    Log.e(TAG, "onClick: " + botUsername.getText().toString() );
-                    startService();
-                }
-
+                Log.e(TAG, "onClick: " + botUsername.getText().toString() );
+                startService();
             }
+
         });
         if (!checkPermissions()) {
             askPermissions();
