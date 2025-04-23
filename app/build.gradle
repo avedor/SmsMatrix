@@ -4,12 +4,12 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'realm-android'
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 35
     defaultConfig {
         applicationId "eu.droogers.smsmatrix"
         namespace "eu.droogers.smsmatrix"
         minSdkVersion 23
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode 16
         versionName "0.0.16"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
