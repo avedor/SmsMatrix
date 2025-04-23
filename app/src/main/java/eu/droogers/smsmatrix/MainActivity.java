@@ -5,14 +5,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
@@ -20,6 +27,7 @@ import static android.Manifest.permission.READ_PHONE_STATE;
 import static android.Manifest.permission.READ_SMS;
 import static android.Manifest.permission.RECEIVE_SMS;
 import static android.Manifest.permission.SEND_SMS;
+import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.content.ContentValues.TAG;
 
 public class MainActivity extends Activity {
@@ -32,8 +40,8 @@ public class MainActivity extends Activity {
     private EditText hsUrl;
     private EditText syncDelay;
     private EditText syncTimeout;
-    private static final String[] PERMISSIONS_REQUIRED = new String[]{
-        READ_SMS, SEND_SMS, RECEIVE_SMS, READ_PHONE_STATE, READ_CONTACTS, READ_EXTERNAL_STORAGE
+    private static final String[] PERMISSIONS_REQUIRED_BASE = new String[]{
+            READ_SMS, SEND_SMS, RECEIVE_SMS, READ_PHONE_STATE, READ_CONTACTS, READ_EXTERNAL_STORAGE
     };
     private static final int PERMISSION_REQUEST_CODE = 200;
 
@@ -59,27 +67,15 @@ public class MainActivity extends Activity {
         syncDelay.setText(sp.getString("syncDelay", "12"));
         syncTimeout.setText(sp.getString("syncTimeout", "30"));
 
-
         Button saveButton = findViewById(R.id.button_save);
         saveButton.setOnClickListener(v -> {
             if (!checkPermissions()) {
                 askPermissions();
             } else {
-                SharedPreferences.Editor editor = sp.edit();
-                editor.putString("botUsername", botUsername.getText().toString());
-                editor.putString("botPassword", botPassword.getText().toString());
-                editor.putString("username", username.getText().toString());
-                editor.putString("device", device.getText().toString());
-                editor.putString("hsUrl", hsUrl.getText().toString());
-                editor.putString("syncDelay", syncDelay.getText().toString());
-                editor.putString("syncTimeout", syncTimeout.getText().toString());
-                editor.apply();
-
-                Log.e(TAG, "onClick: " + botUsername.getText().toString() );
-                startService();
+                saveSettingsAndStartService();
             }
-
         });
+
         if (!checkPermissions()) {
             askPermissions();
         } else {
@@ -87,24 +83,78 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void saveSettingsAndStartService() {
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString("botUsername", botUsername.getText().toString());
+        editor.putString("botPassword", botPassword.getText().toString());
+        editor.putString("username", username.getText().toString());
+        editor.putString("device", device.getText().toString());
+        editor.putString("hsUrl", hsUrl.getText().toString());
+        editor.putString("syncDelay", syncDelay.getText().toString());
+        editor.putString("syncTimeout", syncTimeout.getText().toString());
+        editor.apply();
+
+        Log.e(TAG, "onClick: " + botUsername.getText().toString());
+        startService();
+    }
+
     private boolean checkPermissions() {
-        for (String permission: PERMISSIONS_REQUIRED) {
+        List<String> requiredPermissions = new ArrayList<>(Arrays.asList(PERMISSIONS_REQUIRED_BASE));
+
+        // Add POST_NOTIFICATIONS permission for Android 13+ (TIRAMISU)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requiredPermissions.add(POST_NOTIFICATIONS);
+        }
+
+        for (String permission: requiredPermissions) {
             int result = ContextCompat.checkSelfPermission(getApplicationContext(), permission);
-            if (result  != PackageManager.PERMISSION_GRANTED) {
+            if (result != PackageManager.PERMISSION_GRANTED) {
                 return false;
             }
-            Log.i(TAG, "setOnClickListener - result result result" + result);
         }
         return true;
     }
 
     private void askPermissions() {
-        ActivityCompat.requestPermissions(this, PERMISSIONS_REQUIRED, PERMISSION_REQUEST_CODE);
+        List<String> requiredPermissions = new ArrayList<>(Arrays.asList(PERMISSIONS_REQUIRED_BASE));
+
+        // Add POST_NOTIFICATIONS permission for Android 13+ (TIRAMISU)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requiredPermissions.add(POST_NOTIFICATIONS);
+        }
+
+        ActivityCompat.requestPermissions(this,
+                requiredPermissions.toArray(new String[0]),
+                PERMISSION_REQUEST_CODE);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+
+            if (allGranted) {
+                saveSettingsAndStartService();
+            } else {
+                Toast.makeText(this, "Required permissions not granted", Toast.LENGTH_LONG).show();
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
 
     private void startService() {
         Intent intent = new Intent(this, MatrixService.class);
-        startService(intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
     }
 }
