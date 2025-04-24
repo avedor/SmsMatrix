@@ -5,13 +5,13 @@
         <!-- Customize your theme here. -->
     </style>
 
-    <style name="Base.TextAppearance.AppCompat.Subhead"></style>
+    <style name="Base.TextAppearance.AppCompat.Subhead" />
 
-    <style name="Base.TextAppearance.AppCompat"></style>
+    <style name="Base.TextAppearance.AppCompat" />
 
-    <style name="Base.TextAppearance"></style>
+    <style name="Base.TextAppearance" />
 
-    <style name="Base"></style>
+    <style name="Base" />
 
 
 </resources>
